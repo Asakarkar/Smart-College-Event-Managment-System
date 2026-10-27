@@ -29,6 +29,8 @@ class App {
       }
     }
 
+    this.initCanvasAnimation();
+
     if (this.currentUser) {
       this.showMainApp();
     } else {
@@ -38,7 +40,7 @@ class App {
 
   // ==================== AUTHENTICATION ====================
   setAuthMode(mode) {
-    document.querySelectorAll('.auth-tab-pill').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
     document.getElementById(mode === 'login' ? 'tabLoginBtn' : 'tabRegisterBtn').classList.add('active');
 
     document.getElementById('loginForm').classList.toggle('hidden', mode !== 'login');
@@ -83,7 +85,7 @@ class App {
         }
 
         localStorage.setItem('campuspulse_user', JSON.stringify(this.currentUser));
-        this.showToast(`Welcome back, ${this.currentUser.name}!`, 'success');
+        this.showToast(`Authenticated: ${this.currentUser.name}`, 'success');
         this.showMainApp();
       } else {
         this.showToast(data.error || 'Invalid credentials', 'error');
@@ -152,13 +154,11 @@ class App {
     document.getElementById('userDisplayRole').textContent = isCoordinator
       ? 'Coordinator • Admin'
       : `Student • ${this.currentUser.department}`;
-    document.getElementById('avatarLetter').textContent = this.currentUser.name.charAt(0).toUpperCase();
 
-    // Set dynamic greeting
-    const hour = new Date().getHours();
-    const greeting = hour < 12 ? 'Good morning' : (hour < 18 ? 'Good afternoon' : 'Good evening');
     const greetingEl = document.getElementById('greetingBadge');
-    if (greetingEl) greetingEl.textContent = `${greeting}, ${this.currentUser.name.split(' ')[0]} 👋`;
+    if (greetingEl) {
+      greetingEl.textContent = `User: ${this.currentUser.name} (${this.currentUser.department})`;
+    }
 
     this.showView('events');
     this.loadEvents();
@@ -169,19 +169,25 @@ class App {
 
   // ==================== NAVIGATION VIEWS ====================
   showView(viewName) {
-    document.querySelectorAll('.nav-pill-btn').forEach(l => l.classList.remove('active'));
-    document.querySelectorAll('.app-view').forEach(v => v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(l => l.classList.remove('active'));
+    document.querySelectorAll('.content-view').forEach(v => v.classList.remove('active'));
 
     if (viewName === 'events') {
-      document.getElementById('navEventsBtn').classList.add('active');
-      document.getElementById('viewEvents').classList.add('active');
+      const b = document.getElementById('navEventsBtn');
+      if (b) b.classList.add('active');
+      const v = document.getElementById('viewEvents');
+      if (v) v.classList.add('active');
     } else if (viewName === 'registrations') {
-      document.getElementById('navMyRegistrationsBtn').classList.add('active');
-      document.getElementById('viewRegistrations').classList.add('active');
+      const b = document.getElementById('navMyRegistrationsBtn');
+      if (b) b.classList.add('active');
+      const v = document.getElementById('viewRegistrations');
+      if (v) v.classList.add('active');
       this.loadRegistrations();
     } else if (viewName === 'drafts') {
-      document.getElementById('navDraftsBtn').classList.add('active');
-      document.getElementById('viewDrafts').classList.add('active');
+      const b = document.getElementById('navDraftsBtn');
+      if (b) b.classList.add('active');
+      const v = document.getElementById('viewDrafts');
+      if (v) v.classList.add('active');
       this.renderDrafts();
     }
   }
@@ -211,8 +217,8 @@ class App {
 
   filterCategory(cat) {
     this.activeCategory = cat;
-    document.querySelectorAll('#categoryFilters .cat-pill').forEach(pill => {
-      pill.classList.toggle('active', pill.textContent.toUpperCase().includes(cat) || (cat === 'ALL' && pill.textContent.includes('All')));
+    document.querySelectorAll('#categoryFilters .filter-btn').forEach(pill => {
+      pill.classList.toggle('active', pill.textContent.toUpperCase().includes(cat) || (cat === 'ALL' && pill.textContent.trim() === 'All'));
     });
     this.renderEvents();
   }
@@ -248,9 +254,9 @@ class App {
 
     if (filtered.length === 0) {
       container.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-dim);">
-          <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
-          <p style="font-size: 15px; font-weight: 600;">No campus events match your search.</p>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-secondary);">
+          <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">[ NO MATCHING RECORDS ]</div>
+          <p style="font-size: 13px; margin: 0;">No active campus events match your query.</p>
         </div>
       `;
       return;
@@ -259,65 +265,57 @@ class App {
     const isCoordinator = this.currentUser && this.currentUser.role === 'COORDINATOR';
 
     container.innerHTML = filtered.map(e => {
-      const cat = (e.category || 'TECHNICAL').toUpperCase();
-      const catClass = `chip-${cat.toLowerCase()}`;
-      const barClass = `bar-${cat.toLowerCase()}`;
-      const { month, day } = this.formatDateBlock(e.date);
-
       const isFull = e.availableSeats <= 0;
-      const statusChip = isFull
-        ? `<span class="status-chip chip-full">Sold Out</span>`
-        : `<span class="status-chip chip-open">Seats Open</span>`;
+      const statusLabel = isFull
+        ? `<span class="status-label status-full">FULL</span>`
+        : `<span class="status-label status-open">SEATS OPEN</span>`;
 
       const percent = Math.min(100, Math.round(((e.capacity - e.availableSeats) / e.capacity) * 100));
 
       return `
-        <div class="creative-event-card">
-          <div class="card-accent-bar ${barClass}"></div>
+        <div class="academic-event-card">
+          <div class="card-top-header">
+            <span class="cat-label">${this.escapeHtml(e.category || 'GENERAL')}</span>
+            ${statusLabel}
+          </div>
 
-          <div class="card-top-row">
-            <div class="date-pill-block">
-              <span class="date-month">${month}</span>
-              <span class="date-day">${day}</span>
+          <h3 class="card-title-text">${this.escapeHtml(e.name)}</h3>
+          <p class="card-desc-text">${this.escapeHtml(e.description || 'Institutional campus program.')}</p>
+
+          <div class="card-metadata">
+            <div class="meta-line">
+              <span class="meta-k">DATE:</span>
+              <span class="meta-v">${this.escapeHtml(e.date)}</span>
             </div>
-
-            <div class="card-badges-wrap">
-              <span class="category-chip ${catClass}">${e.category}</span>
-              ${statusChip}
+            <div class="meta-line">
+              <span class="meta-k">VENUE:</span>
+              <span class="meta-v">${this.escapeHtml(e.venue)}</span>
             </div>
           </div>
 
-          <h3 class="event-headline">${this.escapeHtml(e.name)}</h3>
-          <p class="event-synopsis">${this.escapeHtml(e.description || 'Join this exciting campus event.')}</p>
-
-          <div class="event-venue-pill">
-            <span class="venue-icon">📍</span>
-            <span>${this.escapeHtml(e.venue)}</span>
-          </div>
-
-          <div class="capacity-meter-box">
-            <div class="capacity-labels">
-              <span class="seat-counter"><strong>${e.availableSeats}</strong> of ${e.capacity} seats left</span>
-              <span style="font-family: var(--font-mono); font-size: 11px; color: var(--text-dim);">${percent}% full</span>
+          <div class="capacity-progress-line">
+            <div class="capacity-stats">
+              <span>Allotment: ${e.availableSeats} of ${e.capacity} left</span>
+              <span>${percent}%</span>
             </div>
-            <div class="meter-track">
-              <div class="meter-bar" style="width: ${percent}%;"></div>
+            <div class="bar-track">
+              <div class="bar-fill" style="width: ${percent}%;"></div>
             </div>
           </div>
 
-          <div class="card-action-bar">
+          <div class="card-button-row">
             ${isCoordinator
               ? `
-                <button class="btn btn-sm btn-glass" onclick="app.cloneEventAsDraft(${e.id})" title="Duplicate to staging">
-                  🧬 Duplicate
+                <button class="btn btn-outline btn-sm" onclick="app.cloneEventAsDraft(${e.id})" title="Duplicate event as draft">
+                  Duplicate
                 </button>
-                <button class="btn btn-sm btn-glass" onclick="app.openEditModal(${e.id})" title="Edit venue & view revision history">
-                  ⏳ Edit &amp; History
+                <button class="btn btn-outline btn-sm" onclick="app.openEditModal(${e.id})" title="Edit event and view audit history">
+                  Audit &amp; Edit
                 </button>
               `
               : `
-                <button class="btn btn-glow btn-block" ${isFull ? 'disabled' : ''} onclick="app.openRegisterModal(${e.id})">
-                  ${isFull ? 'Sold Out' : '⚡ Grab Pass'}
+                <button class="btn btn-primary btn-block" ${isFull ? 'disabled' : ''} onclick="app.openRegisterModal(${e.id})">
+                  ${isFull ? 'Registration Full' : 'Register for Pass &rarr;'}
                 </button>
               `
             }
@@ -336,43 +334,41 @@ class App {
 
     if (drafts.length === 0) {
       container.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-dim);">
-          <div style="font-size: 32px; margin-bottom: 8px;">🛠️</div>
-          <p style="font-size: 15px; font-weight: 600;">No drafts currently in staging.</p>
-          <p style="font-size: 13px; margin-top: 4px;">Click "Duplicate" on any live event or click "+ Create Event" to prepare one.</p>
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-secondary);">
+          <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">[ STAGING EMPTY ]</div>
+          <p style="font-size: 13px; margin: 0;">No unpublished drafts in the repository.</p>
         </div>
       `;
       return;
     }
 
     container.innerHTML = drafts.map(e => {
-      const { month, day } = this.formatDateBlock(e.date);
       return `
-        <div class="creative-event-card" style="border: 1px dashed rgba(168, 85, 247, 0.4);">
-          <div class="card-top-row">
-            <div class="date-pill-block">
-              <span class="date-month">${month}</span>
-              <span class="date-day">${day}</span>
+        <div class="academic-event-card" style="border: 1px dashed var(--warning);">
+          <div class="card-top-header">
+            <span class="cat-label">${this.escapeHtml(e.category)}</span>
+            <span class="status-label status-draft">DRAFT STAGING</span>
+          </div>
+
+          <h3 class="card-title-text">${this.escapeHtml(e.name)}</h3>
+          <p class="card-desc-text">${this.escapeHtml(e.description || 'Pre-publication draft configuration.')}</p>
+
+          <div class="card-metadata">
+            <div class="meta-line">
+              <span class="meta-k">SCHEDULED:</span>
+              <span class="meta-v">${this.escapeHtml(e.date)}</span>
             </div>
-            <div class="card-badges-wrap">
-              <span class="category-chip chip-${e.category.toLowerCase()}">${e.category}</span>
-              <span class="status-chip chip-draft">Draft Staging</span>
+            <div class="meta-line">
+              <span class="meta-k">HALL &amp; SEATS:</span>
+              <span class="meta-v">${this.escapeHtml(e.venue)} &bull; ${e.capacity}</span>
             </div>
           </div>
 
-          <h3 class="event-headline">${this.escapeHtml(e.name)}</h3>
-          <p class="event-synopsis">${this.escapeHtml(e.description || 'Draft configuration')}</p>
-
-          <div class="event-venue-pill">
-            <span class="venue-icon">📍</span>
-            <span>${this.escapeHtml(e.venue)} &bull; ${e.capacity} seats</span>
-          </div>
-
-          <div class="card-action-bar" style="margin-top: auto;">
-            <button class="btn btn-glow btn-block" onclick="app.publishDraft(${e.id})">
-              🚀 Publish to Campus
+          <div class="card-button-row" style="margin-top: auto;">
+            <button class="btn btn-primary" style="flex: 1;" onclick="app.publishDraft(${e.id})">
+              Publish to Catalog
             </button>
-            <button class="btn btn-glass" onclick="app.openEditModal(${e.id})">
+            <button class="btn btn-outline btn-sm" onclick="app.openEditModal(${e.id})">
               Edit
             </button>
           </div>
@@ -480,27 +476,27 @@ class App {
       if (res.ok) {
         const history = await res.json();
         if (history.length === 0) {
-          container.innerHTML = `<div style="font-size: 12px; color: var(--text-dim);">No saved checkpoints yet.</div>`;
+          container.innerHTML = `<div style="font-size: 12px; color: var(--text-secondary);">No checkpoints recorded.</div>`;
           return;
         }
 
         container.innerHTML = history.slice().reverse().map(m => `
-          <div class="timeline-checkpoint-card">
+          <div class="checkpoint-card">
             <div>
-              <span class="checkpoint-ver">v${m.version}</span>
-              <div class="checkpoint-note">${this.escapeHtml(m.changeSummary || 'Checkpoint')}</div>
-              <div class="checkpoint-meta">
-                📅 ${m.timestamp} &bull; ${m.venue} (${m.capacity} seats) &bull; ${m.author}
+              <span class="checkpoint-version">VERSION ${m.version}</span>
+              <div class="checkpoint-note">${this.escapeHtml(m.changeSummary || 'Audit checkpoint')}</div>
+              <div class="checkpoint-details">
+                ${m.timestamp} &bull; ${m.venue} (${m.capacity} seats) &bull; ${m.author}
               </div>
             </div>
-            <button type="button" class="btn btn-sm btn-glass" onclick="app.restoreEventVersion(${eventId}, ${m.version})">
+            <button type="button" class="btn btn-outline btn-sm" onclick="app.restoreEventVersion(${eventId}, ${m.version})">
               Restore
             </button>
           </div>
         `).join('');
       }
     } catch (err) {
-      container.innerHTML = `<div style="font-size: 12px; color: var(--rose);">Could not load history.</div>`;
+      container.innerHTML = `<div style="font-size: 12px; color: var(--error);">Could not load history.</div>`;
     }
   }
 
@@ -615,16 +611,16 @@ class App {
     const feeEl = document.getElementById('ticketFeeHighlight');
 
     if (tier === 'FREE') {
-      tagEl.textContent = 'SCHOLARSHIP FREE PASS';
-      feeEl.textContent = '$0.00';
+      if (tagEl) tagEl.textContent = 'FREE PASS';
+      if (feeEl) feeEl.textContent = '$0.00';
     } else if (tier === 'STANDARD') {
-      tagEl.textContent = 'STANDARD VIP DELEGATE';
+      if (tagEl) tagEl.textContent = 'STANDARD PASS';
       const price = this.cachedPricing ? this.cachedPricing.STANDARD.finalFee : 150;
-      feeEl.textContent = `$${price.toFixed(2)}`;
+      if (feeEl) feeEl.textContent = `$${price.toFixed(2)}`;
     } else {
-      tagEl.textContent = 'EARLY BIRD PASS (30% OFF)';
+      if (tagEl) tagEl.textContent = 'EARLY BIRD PASS';
       const price = this.cachedPricing ? this.cachedPricing.EARLY_BIRD.finalFee : 105;
-      feeEl.textContent = `$${price.toFixed(2)}`;
+      if (feeEl) feeEl.textContent = `$${price.toFixed(2)}`;
     }
   }
 
@@ -636,7 +632,7 @@ class App {
 
     const btn = document.getElementById('submitRegBtn');
     btn.disabled = true;
-    btn.textContent = 'Issuing Digital Pass...';
+    btn.textContent = 'Recording Registration...';
 
     try {
       const res = await fetch(`${API_BASE}/api/registrations/mediate`, {
@@ -652,10 +648,10 @@ class App {
 
       const data = await res.json();
       btn.disabled = false;
-      btn.textContent = 'Confirm & Generate Pass →';
+      btn.textContent = 'Confirm Registration →';
 
       if (res.ok && data.success) {
-        this.showToast(`Pass issued! Status: ${data.status}`, 'success');
+        this.showToast(`Registration completed: #${data.registrationId}`, 'success');
         this.closeModal('registerModal');
         await this.loadEvents();
         await this.loadRegistrations();
@@ -665,7 +661,7 @@ class App {
       }
     } catch (err) {
       btn.disabled = false;
-      btn.textContent = 'Confirm & Generate Pass →';
+      btn.textContent = 'Confirm Registration →';
       this.showToast('Registration error occurred', 'error');
     }
   }
@@ -691,11 +687,11 @@ class App {
 
     if (this.registrations.length === 0) {
       container.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px; color: var(--text-dim);">
-          <div style="font-size: 32px; margin-bottom: 8px;">🎟️</div>
-          <p style="font-size: 15px; font-weight: 600;">You don't have any event passes yet.</p>
-          <button class="btn btn-glow" style="margin-top: 14px;" onclick="app.showView('events')">
-            Browse &amp; Grab Pass
+        <div style="grid-column: 1 / -1; text-align: center; padding: 48px 20px; color: var(--text-secondary);">
+          <div style="font-size: 15px; font-weight: 700; margin-bottom: 6px;">[ NO ADMISSION PASSES RECORDED ]</div>
+          <p style="font-size: 13px; margin-bottom: 16px;">You have not registered for any events for the current term.</p>
+          <button class="btn btn-primary" onclick="app.showView('events')">
+            Browse Event Catalog &rarr;
           </button>
         </div>
       `;
@@ -704,33 +700,30 @@ class App {
 
     container.innerHTML = this.registrations.map(r => {
       const status = (r.status || 'PENDING').toUpperCase();
-      const statusClass = status === 'APPROVED' ? 'status-approved' : (status === 'REJECTED' ? 'status-rejected' : 'status-pending');
+      const statusClass = status === 'APPROVED' ? 'status-open' : (status === 'REJECTED' ? 'status-full' : 'status-draft');
 
       return `
-        <div class="boarding-pass-card">
-          <div class="pass-main-stub">
-            <div class="pass-meta-top">
-              <span class="category-chip chip-${(r.category || 'technical').toLowerCase()}">${r.category}</span>
-              <span class="pass-id-badge">PASS #${r.registrationId}</span>
+        <div class="pass-record-card">
+          <div class="pass-stub-main">
+            <div class="pass-code-row">
+              <span class="cat-label">${this.escapeHtml(r.category || 'TECHNICAL')}</span>
+              <span class="pass-id">PASS #${r.registrationId}</span>
             </div>
 
             <h3 class="pass-event-title">${this.escapeHtml(r.eventName)}</h3>
 
-            <div class="pass-details-row">
-              <span>👤 ${this.escapeHtml(this.currentUser.name)}</span>
-              <span>🎓 ${this.currentUser.department}</span>
+            <div class="pass-attendee-row">
+              <span>STUDENT: ${this.escapeHtml(this.currentUser.name)}</span>
+              <span>DEPT: ${this.currentUser.department}</span>
             </div>
           </div>
 
-          <div class="pass-divider-notch">
-            <span class="pass-notch-circle top"></span>
-            <span class="pass-notch-circle bottom"></span>
-          </div>
+          <div class="pass-stub-divider"></div>
 
-          <div class="pass-side-stub">
-            <span class="pass-status-pill ${statusClass}">${status}</span>
-            <button class="btn btn-sm btn-ghost" onclick="app.cancelRegistration(${r.registrationId})" style="color: var(--rose); font-size: 11px;">
-              Cancel Pass
+          <div class="pass-stub-side">
+            <span class="status-label ${statusClass}">${status}</span>
+            <button class="btn-cancel-pass" onclick="app.cancelRegistration(${r.registrationId})">
+              [ Cancel ]
             </button>
           </div>
         </div>
@@ -776,14 +769,15 @@ class App {
     if (!container) return;
 
     const toast = document.createElement('div');
-    toast.className = `creative-toast toast-${type}`;
-    const icon = type === 'success' ? '✓' : (type === 'error' ? '✕' : 'ℹ');
-    toast.innerHTML = `<span style="font-weight: bold;">${icon}</span> <span>${this.escapeHtml(msg)}</span>`;
+    const toastTypeClass = type === 'success' ? 'toast-success' : (type === 'error' ? 'toast-error' : '');
+    toast.className = `academic-toast ${toastTypeClass}`;
+    const icon = type === 'success' ? '[OK]' : (type === 'error' ? '[ERR]' : '[INFO]');
+    toast.innerHTML = `<span style="font-weight: 700; margin-right: 6px;">${icon}</span> <span>${this.escapeHtml(msg)}</span>`;
     container.appendChild(toast);
 
     setTimeout(() => {
       toast.style.opacity = '0';
-      toast.style.transform = 'translateY(12px) scale(0.96)';
+      toast.style.transition = 'opacity 0.2s ease';
       setTimeout(() => toast.remove(), 250);
     }, 3200);
   }
@@ -797,6 +791,195 @@ class App {
       "'": '&#39;',
       '"': '&quot;'
     }[tag] || tag));
+  }
+
+  // ==================== CAMPUS EVENT BACKDROP ANIMATION ====================
+  initCanvasAnimation() {
+    const canvas = document.getElementById('campusCanvas');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let width = 0;
+    let height = 0;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const resize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * dpr;
+      canvas.height = height * dpr;
+      ctx.scale(dpr, dpr);
+    };
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Campus venue constellation nodes
+    const venueDefinitions = [
+      { name: 'INNOVATION LAB', code: 'HALL-A', xRel: 0.14, yRel: 0.22 },
+      { name: 'MAIN AUDITORIUM', code: 'AUD-01', xRel: 0.84, yRel: 0.26 },
+      { name: 'SPORTS ARENA', code: 'QUAD-B', xRel: 0.16, yRel: 0.76 },
+      { name: 'SEMINAR HALL', code: 'ROOM-3', xRel: 0.78, yRel: 0.74 },
+      { name: 'AMPHITHEATRE', code: 'OPEN-AIR', xRel: 0.48, yRel: 0.15 },
+      { name: 'STUDENT UNION', code: 'WING-C', xRel: 0.52, yRel: 0.85 },
+      { name: 'TECH INCUBATOR', code: 'LAB-204', xRel: 0.30, yRel: 0.40 },
+      { name: 'CENTRAL ARCHIVE', code: 'LIB-08', xRel: 0.70, yRel: 0.45 },
+      { name: 'DESIGN STUDIO', code: 'STUDIO-1', xRel: 0.07, yRel: 0.48 },
+      { name: 'CYBER LAB', code: 'TERM-5', xRel: 0.90, yRel: 0.50 }
+    ];
+
+    const nodes = venueDefinitions.map(def => ({
+      name: def.name,
+      code: def.code,
+      baseX: def.xRel * width,
+      baseY: def.yRel * height,
+      x: def.xRel * width,
+      y: def.yRel * height,
+      angle: Math.random() * Math.PI * 2,
+      pulse: Math.random() * Math.PI * 2
+    }));
+
+    const packets = [];
+    const spawnPacket = (fromIdx, toIdx) => {
+      packets.push({
+        from: fromIdx,
+        to: toIdx,
+        progress: 0,
+        speed: 0.005 + Math.random() * 0.005
+      });
+    };
+
+    let mouseX = -1000;
+    let mouseY = -1000;
+    window.addEventListener('pointermove', e => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
+    });
+
+    let lastPacketTime = 0;
+
+    const animate = (timestamp) => {
+      ctx.clearRect(0, 0, width, height);
+
+      // Periodically spawn event communication pulses
+      if (timestamp - lastPacketTime > 1900 && packets.length < 6) {
+        lastPacketTime = timestamp;
+        const from = Math.floor(Math.random() * nodes.length);
+        let bestTo = -1;
+        let bestDist = Infinity;
+        for (let j = 0; j < nodes.length; j++) {
+          if (j !== from) {
+            const dx = nodes[from].x - nodes[j].x;
+            const dy = nodes[from].y - nodes[j].y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < 340 && dist < bestDist) {
+              bestDist = dist;
+              bestTo = j;
+            }
+          }
+        }
+        if (bestTo !== -1) {
+          spawnPacket(from, bestTo);
+        }
+      }
+
+      // Update positions with subtle floating harmonic motion
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        n.angle += 0.007;
+        n.pulse += 0.025;
+
+        const targetX = n.baseX + Math.cos(n.angle) * 20;
+        const targetY = n.baseY + Math.sin(n.angle * 0.8) * 16;
+
+        // Gentle interactive mouse repel
+        const mdx = n.x - mouseX;
+        const mdy = n.y - mouseY;
+        const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+        let pushX = 0;
+        let pushY = 0;
+        if (mDist < 140 && mDist > 0) {
+          const force = (140 - mDist) / 140 * 16;
+          pushX = (mdx / mDist) * force;
+          pushY = (mdy / mDist) * force;
+        }
+
+        n.x += ((targetX + pushX) - n.x) * 0.04;
+        n.y += ((targetY + pushY) - n.y) * 0.04;
+      }
+
+      // Draw dashed connection links between venues
+      ctx.lineWidth = 1;
+      ctx.setLineDash([3, 4]);
+
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+
+          if (dist < 260) {
+            const alpha = (1 - dist / 260) * 0.4;
+            ctx.strokeStyle = `rgba(138, 148, 120, ${alpha})`;
+            ctx.beginPath();
+            ctx.moveTo(nodes[i].x, nodes[i].y);
+            ctx.lineTo(nodes[j].x, nodes[j].y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      ctx.setLineDash([]);
+
+      // Draw event broadcast pulses
+      for (let k = packets.length - 1; k >= 0; k--) {
+        const p = packets[k];
+        p.progress += p.speed;
+        if (p.progress >= 1) {
+          packets.splice(k, 1);
+          continue;
+        }
+        const n1 = nodes[p.from];
+        const n2 = nodes[p.to];
+        const px = n1.x + (n2.x - n1.x) * p.progress;
+        const py = n1.y + (n2.y - n1.y) * p.progress;
+
+        ctx.fillStyle = 'rgba(52, 72, 59, 0.7)';
+        ctx.beginPath();
+        ctx.arc(px, py, 2.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Draw venue nodes and typography
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        const pulseScale = 1 + Math.sin(n.pulse) * 0.12;
+
+        // Outer reticle circle
+        ctx.strokeStyle = 'rgba(221, 214, 197, 0.75)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 8 * pulseScale, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Inner solid dot
+        ctx.fillStyle = '#34483B';
+        ctx.beginPath();
+        ctx.arc(n.x, n.y, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Technical venue code label
+        ctx.font = '9px "Courier New", Courier, monospace';
+        ctx.fillStyle = 'rgba(119, 117, 104, 0.85)';
+        ctx.textAlign = 'left';
+        ctx.fillText(`+ ${n.code}: ${n.name}`, n.x + 12, n.y + 3);
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
   }
 }
 

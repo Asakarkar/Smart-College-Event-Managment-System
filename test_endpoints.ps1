@@ -22,11 +22,20 @@ Write-Host "Strategy:" $fee.appliedBreakdown.strategyName
 Write-Host "Base Price: $" $fee.appliedBreakdown.basePrice "Final Fee: $" $fee.appliedBreakdown.finalFee "(Discount: $($fee.appliedBreakdown.discountPercentage)%)"
 
 Write-Host "`n--- 5. Testing Mediator Pattern (POST /api/registrations/mediate) ---"
-$med = Invoke-RestMethod -Uri 'http://localhost:8085/api/registrations/mediate' -Method Post -Body '{"studentId":2,"eventId":2,"feeTier":"STANDARD","notificationChannel":"SMS"}' -ContentType 'application/json'
-Write-Host "Mediator Success:" $med.success "Status:" $med.status
-Write-Host "Coordination Steps:"
-foreach ($line in $med.auditTrail) {
-    Write-Host "  $line"
+try {
+    $med = Invoke-RestMethod -Uri 'http://localhost:8085/api/registrations/mediate' -Method Post -Body '{"studentId":2,"eventId":2,"feeTier":"STANDARD","notificationChannel":"SMS"}' -ContentType 'application/json'
+    Write-Host "Mediator Success:" $med.success "Status:" $med.status
+    Write-Host "Coordination Steps:"
+    foreach ($line in $med.auditTrail) {
+        Write-Host "  $line"
+    }
+} catch {
+    $errResp = $_.ErrorDetails.Message | ConvertFrom-Json
+    Write-Host "Mediator Response (Already registered handled by Mediator):" $errResp.status
+    Write-Host "Coordination Steps:"
+    foreach ($line in $errResp.auditTrail) {
+        Write-Host "  $line"
+    }
 }
 
 Write-Host "`n--- 6. Testing Memento Pattern (GET /api/events/1/memento/history) ---"
