@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CampusPulse &bull; Next-Gen College Event Experience</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Ambient Background Lighting Mesh -->
+  <div class="ambient-glow orb-1"></div>
+  <div class="ambient-glow orb-2"></div>
+  <div class="ambient-glow orb-3"></div>
+
+  <!-- ==================== AUTH VIEW ==================== -->
+  <div id="authView" class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand-glow">
+        <span class="auth-logo-badge">⚡</span>
+      </div>
+      <div class="auth-header">
+        <span class="brand-eyebrow">CAMPUSPULSE PORTAL</span>
+        <h1 class="auth-title">Campus Events, Elevated.</h1>
+        <p class="auth-subtitle">Discover festivals, coding arenas, workshops, and sports championships in one unified hub.</p>
+      </div>
+
+      <div class="auth-tabs-pill">
+        <button class="auth-tab-pill active" id="tabLoginBtn" onclick="app.setAuthMode('login')">Sign In</button>
+        <button class="auth-tab-pill" id="tabRegisterBtn" onclick="app.setAuthMode('register')">Create Account</button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="loginForm" class="auth-form" onsubmit="app.handleLogin(event)">
+        <div class="input-field-group">
+          <label for="loginUsername">Username / Student ID</label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">👤</span>
+            <input type="text" id="loginUsername" class="creative-input" placeholder="e.g. student1 or coordinator" required autocomplete="username">
+          </div>
+        </div>
+
+        <div class="input-field-group">
+          <label for="loginPassword">Password</label>
+          <div class="input-icon-wrap">
+            <span class="input-icon">🔒</span>
+            <input type="password" id="loginPassword" class="creative-input" placeholder="Enter password" required autocomplete="current-password">
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-glow btn-block">
+          <span>Enter Portal &rarr;</span>
+        </button>
+
+        <div class="demo-quick-bar">
+          <span class="quick-title">Quick Demo Logins</span>
+          <div class="quick-chips">
+            <button type="button" class="quick-chip" onclick="app.fillDemoLogin('student1', '1234')">
+              <span class="chip-avatar">👨‍🎓</span> student1 <span class="chip-dept">CSE</span>
+            </button>
+            <button type="button" class="quick-chip" onclick="app.fillDemoLogin('student2', '1234')">
+              <span class="chip-avatar">👩‍🎓</span> student2 <span class="chip-dept">ECE</span>
+            </button>
+            <button type="button" class="quick-chip chip-coord" onclick="app.fillDemoLogin('coordinator', 'admin123')">
+              <span class="chip-avatar">⚡</span> coordinator <span class="chip-dept">Admin</span>
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Student Sign Up Form -->
+      <form id="registerForm" class="auth-form hidden" onsubmit="app.handleRegister(event)">
+        <div class="input-field-group">
+          <label for="regFullName">Full Name</label>
+          <input type="text" id="regFullName" class="creative-input" placeholder="e.g. Rahul Sharma" required>
+        </div>
+        <div class="form-grid-2">
+          <div class="input-field-group">
+            <label for="regUsername">Choose Username</label>
+            <input type="text" id="regUsername" class="creative-input" placeholder="e.g. rahul01" required>
+          </div>
+          <div class="input-field-group">
+            <label for="regDepartment">Department</label>
+            <select id="regDepartment" class="creative-input">
+              <option value="CSE">CSE (Computer Science)</option>
+              <option value="ECE">ECE (Electronics)</option>
+              <option value="MECH">MECH (Mechanical)</option>
+              <option value="CIVIL">CIVIL (Civil Engg)</option>
+              <option value="IT">IT (Information Tech)</option>
+            </select>
+          </div>
+        </div>
+        <div class="input-field-group">
+          <label for="regEmail">College Email</label>
+          <input type="email" id="regEmail" class="creative-input" placeholder="student@college.edu" required>
+        </div>
+        <div class="form-grid-2">
+          <div class="input-field-group">
+            <label for="regPassword">Password</label>
+            <input type="password" id="regPassword" class="creative-input" required>
+          </div>
+          <div class="input-field-group">
+            <label for="regConfirmPassword">Confirm Password</label>
+            <input type="password" id="regConfirmPassword" class="creative-input" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-glow btn-block">
+          <span>Create Student Account</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MAIN APPLICATION ==================== -->
+  <div id="mainAppView" class="app-shell hidden">
+
+    <!-- Floating Glass Header -->
+    <header class="glass-header">
+      <div class="header-inner">
+        <div class="brand-cluster">
+          <div class="brand-orb">⚡</div>
+          <div class="brand-text">
+            <span class="brand-title">CampusPulse</span>
+            <span class="brand-version">Spring 2026</span>
+          </div>
+        </div>
+
+        <nav class="floating-nav-pill">
+          <button class="nav-pill-btn active" id="navEventsBtn" onclick="app.showView('events')">
+            <span class="nav-icon">🎪</span> Discover Events
+          </button>
+          <button class="nav-pill-btn" id="navMyRegistrationsBtn" onclick="app.showView('registrations')">
+            <span class="nav-icon">🎟️</span> My Digital Passes
+          </button>
+          <button class="nav-pill-btn hidden" id="navDraftsBtn" onclick="app.showView('drafts')">
+            <span class="nav-icon">🛠️</span> Staging &amp; Drafts
+          </button>
+        </nav>
+
+        <div class="header-actions">
+          <button class="btn btn-sm btn-glow hidden" id="createEventTopBtn" onclick="app.openModal('createEventModal')">
+            + Create Event
+          </button>
+
+          <div class="user-badge-glass">
+            <div class="user-avatar-ring">
+              <span id="avatarLetter">A</span>
+              <span class="online-indicator"></span>
+            </div>
+            <div class="user-meta">
+              <span class="user-name" id="userDisplayName">Aditya</span>
+              <span class="user-role" id="userDisplayRole">Student &bull; CSE</span>
+            </div>
+            <button class="btn-icon-logout" onclick="app.logout()" title="Sign Out">
+              ⎋
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- App Main Body -->
+    <main class="app-content">
+
+      <!-- View 1: Events Explorer -->
+      <section id="viewEvents" class="app-view active">
+        <!-- Creative Hero Bar -->
+        <div class="hero-strip">
+          <div class="hero-left">
+            <div class="greeting-badge" id="greetingBadge">Good evening 👋</div>
+            <h1 class="hero-heading">Explore Upcoming Events</h1>
+            <p class="hero-subheading">Grab passes, compete in hackathons, and experience live campus culture.</p>
+          </div>
+          <div class="hero-stats-capsule">
+            <div class="stat-bubble">
+              <span class="stat-val" id="statLiveCount">4</span>
+              <span class="stat-tag">Live Events</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-bubble">
+              <span class="stat-val" id="statPassRate">100%</span>
+              <span class="stat-tag">Verified Approvals</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Search Control Ribbon -->
+        <div class="control-ribbon">
+          <div class="search-box-glass">
+            <span class="search-glyph">🔍</span>
+            <input type="text" id="eventSearchInput" class="search-input" placeholder="Search events, venues, topics..." oninput="app.handleSearch(event)">
+          </div>
+
+          <div class="category-filter-strip" id="categoryFilters">
+            <button class="cat-pill active" onclick="app.filterCategory('ALL')">All Events</button>
+            <button class="cat-pill" onclick="app.filterCategory('TECHNICAL')">💻 Technical</button>
+            <button class="cat-pill" onclick="app.filterCategory('CULTURAL')">🎭 Cultural</button>
+            <button class="cat-pill" onclick="app.filterCategory('SPORTS')">⚽ Sports</button>
+            <button class="cat-pill" onclick="app.filterCategory('WORKSHOP')">💡 Workshops</button>
+          </div>
+        </div>
+
+        <!-- Events Grid -->
+        <div class="events-card-grid" id="eventsGrid">
+          <!-- Populated by app.js -->
+        </div>
+      </section>
+
+      <!-- View 2: My Digital Passes (Student) -->
+      <section id="viewRegistrations" class="app-view">
+        <div class="hero-strip">
+          <div class="hero-left">
+            <h1 class="hero-heading">My Digital Passes</h1>
+            <p class="hero-subheading">Your verified event admissions, boarding passes, and ticket statuses.</p>
+          </div>
+          <button class="btn btn-sm btn-glass" onclick="app.loadRegistrations()">🔄 Refresh Passes</button>
+        </div>
+
+        <div class="passes-wallet-grid" id="registrationsPassesGrid">
+          <!-- Populated by app.js as digital boarding passes -->
+        </div>
+      </section>
+
+      <!-- View 3: Staging & Drafts (Coordinator Only) -->
+      <section id="viewDrafts" class="app-view">
+        <div class="hero-strip">
+          <div class="hero-left">
+            <div class="greeting-badge">Coordinator Staging Console</div>
+            <h1 class="hero-heading">Event Staging &amp; Drafts</h1>
+            <p class="hero-subheading">Review draft events, run category equipment checks, and publish to campus.</p>
+          </div>
+          <button class="btn btn-glow" onclick="app.openModal('createEventModal')">+ Create Event</button>
+        </div>
+
+        <div class="events-card-grid" id="draftsGrid">
+          <!-- Populated by app.js -->
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- ==================== MODAL: DIGITAL TICKET CHECKOUT ==================== -->
+  <div class="modal-backdrop" id="registerModal">
+    <div class="modal-window modal-checkout">
+      <div class="modal-top">
+        <div class="modal-badge-title">
+          <span class="badge-dot"></span>
+          <span>GET EVENT PASS</span>
+        </div>
+        <button class="modal-close-btn" onclick="app.closeModal('registerModal')">&times;</button>
+      </div>
+
+      <div class="checkout-grid">
+        <!-- Left: Options -->
+        <div class="checkout-controls">
+          <h3 class="checkout-title" id="checkoutEventTitle">TechFest Hackathon</h3>
+          <p class="checkout-desc" id="checkoutEventMeta">Innovation Lab &bull; 2026-09-10</p>
+
+          <div class="section-label">Select Ticket Tier</div>
+          <div class="tier-cards-wrap">
+            <label class="tier-card-option">
+              <input type="radio" name="ticketTier" value="EARLY_BIRD" checked onchange="app.updateInteractiveTicket()">
+              <div class="tier-card-inner">
+                <div class="tier-badge-glow">30% OFF</div>
+                <div class="tier-name">Early Bird Pass</div>
+                <div class="tier-info">Priority check-in &bull; Fast track</div>
+                <div class="tier-amount" id="checkoutEarlyPrice">$105.00</div>
+              </div>
+            </label>
+
+            <label class="tier-card-option">
+              <input type="radio" name="ticketTier" value="FREE" onchange="app.updateInteractiveTicket()">
+              <div class="tier-card-inner">
+                <div class="tier-badge-glow" style="background: rgba(16,185,129,0.15); color: #34d399;">SPONSORED</div>
+                <div class="tier-name">Academic Free Pass</div>
+                <div class="tier-info">College council scholarship</div>
+                <div class="tier-amount">$0.00</div>
+              </div>
+            </label>
+
+            <label class="tier-card-option">
+              <input type="radio" name="ticketTier" value="STANDARD" onchange="app.updateInteractiveTicket()">
+              <div class="tier-card-inner">
+                <div class="tier-badge-glow" style="background: rgba(168,85,247,0.15); color: #c084fc;">GENERAL</div>
+                <div class="tier-name">Standard Delegate</div>
+                <div class="tier-info">Full event access</div>
+                <div class="tier-amount" id="checkoutStandardPrice">$150.00</div>
+              </div>
+            </label>
+          </div>
+
+          <div class="section-label">Send Confirmation To</div>
+          <div class="channel-select-wrap">
+            <select id="regNotificationChannel" class="creative-input">
+              <option value="EMAIL">✉️ Email Address Alert</option>
+              <option value="SMS">💬 Instant SMS Text</option>
+              <option value="MOBILE_APP">📱 CampusPulse App Push</option>
+            </select>
+          </div>
+
+          <button class="btn btn-glow btn-block" id="submitRegBtn" onclick="app.submitRegistration()" style="margin-top: 20px;">
+            Confirm &amp; Generate Pass &rarr;
+          </button>
+        </div>
+
+        <!-- Right: Live Interactive Ticket Preview -->
+        <div class="ticket-preview-pane">
+          <div class="virtual-ticket" id="virtualTicket">
+            <div class="ticket-glow-header">
+              <span class="ticket-logo">⚡ CAMPUSPULSE</span>
+              <span class="ticket-tier-tag" id="ticketTierTag">EARLY BIRD PASS</span>
+            </div>
+
+            <div class="ticket-body">
+              <div class="ticket-event-name" id="ticketEventName">TechFest Hackathon</div>
+              <div class="ticket-date-venue" id="ticketDateVenue">2026-09-10 &bull; Innovation Lab</div>
+
+              <div class="ticket-attendee-box">
+                <div class="ticket-field">
+                  <span class="ticket-lbl">ATTENDEE</span>
+                  <span class="ticket-val" id="ticketAttendee">Aditya Sharma</span>
+                </div>
+                <div class="ticket-field">
+                  <span class="ticket-lbl">DEPARTMENT</span>
+                  <span class="ticket-val" id="ticketDept">CSE</span>
+                </div>
+              </div>
+
+              <div class="ticket-perforation">
+                <span class="perf-circle left"></span>
+                <span class="perf-line"></span>
+                <span class="perf-circle right"></span>
+              </div>
+
+              <div class="ticket-footer">
+                <div>
+                  <span class="ticket-lbl">ADMISSION FEE</span>
+                  <span class="ticket-fee-highlight" id="ticketFeeHighlight">$105.00</span>
+                </div>
+                <div class="barcode-sim">
+                  <span class="barcode-bar"></span>
+                  <span class="barcode-bar"></span>
+                  <span class="barcode-bar wide"></span>
+                  <span class="barcode-bar"></span>
+                  <span class="barcode-bar wide"></span>
+                  <span class="barcode-bar"></span>
+                  <span class="barcode-bar"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: CREATE EVENT ==================== -->
+  <div class="modal-backdrop" id="createEventModal">
+    <div class="modal-window">
+      <div class="modal-top">
+        <h3 class="modal-title">Create New Campus Event</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('createEventModal')">&times;</button>
+      </div>
+      <form onsubmit="app.handleCreateEvent(event)">
+        <div class="modal-form-body">
+          <div class="form-grid-2">
+            <div class="input-field-group">
+              <label for="evtName">Event Title</label>
+              <input type="text" id="evtName" class="creative-input" placeholder="e.g. AI Hackathon 2026" required>
+            </div>
+            <div class="input-field-group">
+              <label for="evtCategory">Category</label>
+              <select id="evtCategory" class="creative-input" required>
+                <option value="TECHNICAL">Technical</option>
+                <option value="CULTURAL">Cultural</option>
+                <option value="SPORTS">Sports</option>
+                <option value="WORKSHOP">Workshop</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="input-field-group">
+            <label for="evtDesc">Description</label>
+            <textarea id="evtDesc" class="creative-input" rows="2" placeholder="Brief event summary and guidelines..."></textarea>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="input-field-group">
+              <label for="evtDate">Event Date</label>
+              <input type="date" id="evtDate" class="creative-input" required>
+            </div>
+            <div class="input-field-group">
+              <label for="evtCapacity">Total Seating Capacity</label>
+              <input type="number" id="evtCapacity" class="creative-input" value="100" min="5" required>
+            </div>
+          </div>
+
+          <div class="input-field-group">
+            <label for="evtVenue">Venue / Campus Hall</label>
+            <input type="text" id="evtVenue" class="creative-input" placeholder="e.g. Innovation Lab / Main Auditorium" required>
+          </div>
+        </div>
+        <div class="modal-bottom">
+          <button type="button" class="btn btn-ghost" onclick="app.closeModal('createEventModal')">Cancel</button>
+          <button type="submit" class="btn btn-glow">Save &amp; Publish</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL: EDIT & REVISION HISTORY ==================== -->
+  <div class="modal-backdrop" id="editEventModal">
+    <div class="modal-window modal-wide">
+      <div class="modal-top">
+        <h3 class="modal-title" id="editModalTitle">Edit Event &amp; Checkpoints</h3>
+        <button class="modal-close-btn" onclick="app.closeModal('editEventModal')">&times;</button>
+      </div>
+
+      <div class="edit-modal-split">
+        <!-- Edit Form -->
+        <form id="editEventForm" onsubmit="app.handleSaveEdit(event)" class="edit-pane">
+          <input type="hidden" id="editEventId">
+          <div class="input-field-group">
+            <label for="editVenue">Venue</label>
+            <input type="text" id="editVenue" class="creative-input" required>
+          </div>
+          <div class="form-grid-2">
+            <div class="input-field-group">
+              <label for="editCapacity">Capacity</label>
+              <input type="number" id="editCapacity" class="creative-input" required>
+            </div>
+            <div class="input-field-group">
+              <label for="editStatus">Status</label>
+              <select id="editStatus" class="creative-input">
+                <option value="OPEN">OPEN</option>
+                <option value="DRAFT">DRAFT</option>
+                <option value="CLOSED">CLOSED</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-field-group">
+            <label for="editReason">Audit Note / Change Reason</label>
+            <input type="text" id="editReason" class="creative-input" placeholder="e.g. Expanded seating to meet high demand" required>
+          </div>
+          <button type="submit" class="btn btn-glow btn-block" style="margin-top: 10px;">
+            Save &amp; Create Checkpoint
+          </button>
+        </form>
+
+        <!-- Revision History Timeline -->
+        <div class="history-pane">
+          <div class="history-pane-header">
+            <h4>Revision Checkpoints</h4>
+            <span class="history-hint">1-click restore to any past state</span>
+          </div>
+          <div class="timeline-scroll" id="eventHistoryTimeline">
+            <!-- Populated by app.js -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Stack -->
+  <div class="toast-stack" id="toastContainer"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

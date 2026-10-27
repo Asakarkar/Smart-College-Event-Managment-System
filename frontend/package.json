@@ -1,0 +1,20 @@
+{
+  "name": "college-event-management-frontend",
+  "version": "1.0.0",
+  "description": "Fullstack frontend for Smart College Event Management System demonstrating 13 Design Patterns",
+  "scripts": {
+    "dev": "npx -y serve dist -p 5173",
+    "serve": "npx -y serve dist -p 8085"
+  },
+  "keywords": [
+    "design-patterns",
+    "prototype",
+    "mediator",
+    "template-method",
+    "strategy",
+    "memento",
+    "mvc"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}

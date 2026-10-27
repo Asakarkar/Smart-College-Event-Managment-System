@@ -164,9 +164,11 @@ public class DatabaseManager {
              ResultSet r = s.executeQuery(sql)) {
             while (r.next()) {
                 result.add(new com.college.event.model.BaseEvent(
+                        r.getInt("id"),
                         r.getString("name"), r.getString("category"),
                         r.getString("description"), r.getString("event_date"),
-                        r.getString("venue"), r.getInt("capacity")));
+                        r.getString("venue"), r.getInt("capacity"),
+                        r.getString("status")));
             }
         } catch (SQLException e) { throw new RuntimeException(e); }
         return result;
@@ -181,6 +183,24 @@ public class DatabaseManager {
         return ids;
     }
 
+    public Event getEventById(int id) {
+        String sql = "SELECT * FROM events WHERE id=?";
+        try (Connection c = connect(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setInt(1, id);
+            try (ResultSet r = p.executeQuery()) {
+                if (r.next()) {
+                    return new com.college.event.model.BaseEvent(
+                            r.getInt("id"),
+                            r.getString("name"), r.getString("category"),
+                            r.getString("description"), r.getString("event_date"),
+                            r.getString("venue"), r.getInt("capacity"),
+                            r.getString("status"));
+                }
+            }
+        } catch (SQLException e) { throw new RuntimeException(e); }
+        return null;
+    }
+
     public int createEvent(Event e) {
         String sql = "INSERT INTO events(name,category,description,event_date,venue,capacity,status) VALUES(?,?,?,?,?,?,?)";
         try (Connection c = connect();
@@ -188,8 +208,33 @@ public class DatabaseManager {
             p.setString(1, e.getName()); p.setString(2, e.getCategory());
             p.setString(3, e.getDescription()); p.setString(4, e.getDate());
             p.setString(5, e.getVenue()); p.setInt(6, e.getCapacity());
-            p.setString(7, "OPEN"); p.executeUpdate();
+            p.setString(7, (e.getStatus() != null && !e.getStatus().isBlank()) ? e.getStatus() : "OPEN");
+            p.executeUpdate();
             try (ResultSet r = p.getGeneratedKeys()) { return r.next() ? r.getInt(1) : -1; }
+        } catch (SQLException ex) { throw new RuntimeException(ex); }
+    }
+
+    public boolean updateEvent(int id, Event e) {
+        String sql = "UPDATE events SET name=?, category=?, description=?, event_date=?, venue=?, capacity=?, status=? WHERE id=?";
+        try (Connection c = connect(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, e.getName());
+            p.setString(2, e.getCategory());
+            p.setString(3, e.getDescription());
+            p.setString(4, e.getDate());
+            p.setString(5, e.getVenue());
+            p.setInt(6, e.getCapacity());
+            p.setString(7, (e.getStatus() != null && !e.getStatus().isBlank()) ? e.getStatus() : "OPEN");
+            p.setInt(8, id);
+            return p.executeUpdate() > 0;
+        } catch (SQLException ex) { throw new RuntimeException(ex); }
+    }
+
+    public boolean updateEventStatus(int id, String status) {
+        String sql = "UPDATE events SET status=? WHERE id=?";
+        try (Connection c = connect(); PreparedStatement p = c.prepareStatement(sql)) {
+            p.setString(1, status);
+            p.setInt(2, id);
+            return p.executeUpdate() > 0;
         } catch (SQLException ex) { throw new RuntimeException(ex); }
     }
 

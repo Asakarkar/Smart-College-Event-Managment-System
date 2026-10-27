@@ -4,32 +4,35 @@ A Java 17 + SQLite + JDBC console application demonstrating the design patterns 
 
 ## Design Patterns
 
-| Pattern | Project Usage |
-|---|---|
-| Singleton | One central `EventManagementSystem` |
-| Chain of Responsibility | Coordinator → Faculty Coordinator → HOD approval |
-| Factory Method | Create Technical/Cultural/Sports/Workshop events |
-| Proxy | Student authentication before system access |
-| Abstract Factory | Create category-specific event families |
-| Bridge | Email/SMS/Mobile App notifications |
-| Observer | Student, Faculty and Event Coordinator notifications |
-| JDBC + SQLite | Persistent CRUD operations |
+| Pattern | Category | Project Usage |
+|---|---|---|
+| **Prototype** | Creational | `EventPrototype` & `BaseEvent.cloneDraft()` – Copies an existing event to create a separate working draft |
+| **Mediator** | Behavioral | `CollegeEventMediator` – Centralizes communication among collaborators (Student, Event, Fee Strategy, Chain, Observers, Bridge) |
+| **Template Method** | Behavioral | `EventWorkflowTemplate` – Defines workflow skeleton with variable steps for Technical, Cultural, and Sports event deployment |
+| **Strategy** | Behavioral | `FeeCalculationStrategy` – Interchangeable pricing algorithms: `FREE`, `STANDARD`, and `EARLY_BIRD` |
+| **Memento** | Behavioral | `EventMemento` & `EventCaretaker` – Captures state snapshots for event version history and 1-click restore |
+| **MVC** | Architectural | `EventModel`, `EventView`, `EventController` – Cleanly decouples domain logic, UI presentation, and request coordination |
+| **Singleton** | Creational | One central `EventManagementSystem` instance |
+| **Chain of Responsibility** | Behavioral | Coordinator → Faculty Coordinator → HOD 3-tier approval |
+| **Factory Method** | Creational | Create Technical/Cultural/Sports/Workshop events |
+| **Proxy** | Structural | Student authentication before system access |
+| **Abstract Factory** | Creational | Create category-specific event families and labels |
+| **Bridge** | Structural | Decouples notification abstraction from Email/SMS/Mobile App channels |
+| **Observer** | Behavioral | Student, Faculty and Event Coordinator notifications |
+| **JDBC + SQLite** | Persistence | Persistent CRUD operations in `college_events.db` |
 
 ## Features
 
-- Student registration and login
-- View events
-- Create events using Factory Method
-- Event-category families using Abstract Factory
-- Event registration
-- Approval workflow using Chain of Responsibility
-- Proxy authentication
-- Email/SMS/Mobile App notification simulation
-- Observer-based status notifications
-- SQLite database with JDBC
-- CRUD for students, events and registrations
-- Seed data for quick demonstration
-- JUnit tests
+- **Fullstack Web Frontend**: Modern glassmorphism UI with live interactive labs for all 13 patterns.
+- **Embedded REST API**: High-speed Java HTTP REST server (`WebServer.java`) on port 8085.
+- **Event Draft Cloning (Prototype)**: Clone any approved event into an isolated working draft.
+- **Workflow Orchestration (Mediator)**: Coordinated 10-step registration and approval pipeline.
+- **Pipeline Runners (Template Method)**: Automated multi-step event preparation for Tech, Cultural, and Sports.
+- **Dynamic Fee Calculator (Strategy)**: Real-time calculation across FREE, STANDARD, and EARLY_BIRD tiers.
+- **Time Machine (Memento)**: Event version history, audit checkpoints, and rollback.
+- **Model-View-Controller (MVC)**: Clean architectural decoupling with interactive state inspector.
+- **Student & Coordinator Portals**: Registration, login, approval tracking, and cancellation.
+- **JUnit 5 Test Suite**: 8 automated unit tests covering all pattern implementations.
 
 ## Requirements
 
@@ -38,16 +41,25 @@ A Java 17 + SQLite + JDBC console application demonstrating the design patterns 
 
 ## Run
 
+### 1. Launch Fullstack Web Application (UI + REST API)
+```bash
+mvn exec:java
+```
+Or with custom port:
+```bash
+mvn exec:java -Dexec.args="8085"
+```
+Then open your browser at: **`http://localhost:8085`**
+
+### 2. Launch Console Application & Design Pattern Lab
+```bash
+mvn exec:java -Dexec.mainClass="com.college.event.Main"
+```
+Or package and run the JAR:
 ```bash
 mvn clean test
 mvn package
 java -jar target/smart-college-event-management-1.0.0.jar
-```
-
-Or:
-
-```bash
-mvn exec:java -Dexec.mainClass="com.college.event.Main"
 ```
 
 The SQLite database `college_events.db` is created automatically in the project root and is ignored by Git.

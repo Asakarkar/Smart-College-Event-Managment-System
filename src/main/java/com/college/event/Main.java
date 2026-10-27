@@ -10,6 +10,15 @@ import com.college.event.patterns.chain.*;
 import com.college.event.patterns.factory.*;
 import com.college.event.patterns.observer.*;
 import com.college.event.patterns.proxy.EventSystemProxy;
+import com.college.event.patterns.mediator.CollegeEventMediator;
+import com.college.event.patterns.mediator.MediatedRegistrationResult;
+import com.college.event.patterns.memento.EventCaretaker;
+import com.college.event.patterns.memento.EventMemento;
+import com.college.event.patterns.mvc.controller.EventController;
+import com.college.event.patterns.mvc.model.EventModel;
+import com.college.event.patterns.strategy.*;
+import com.college.event.patterns.templatemethod.*;
+import com.college.event.server.WebServer;
 import com.college.event.patterns.singleton.EventManagementSystem;
 
 import java.util.List;
@@ -29,7 +38,9 @@ public class Main {
             System.out.println("2. Student Login");
             System.out.println("3. Browse Events");
             System.out.println("4. Coordinator Panel");
-            System.out.println("5. Exit");
+            System.out.println("5. Design Pattern Lab (Prototype, Mediator, Template Method, Strategy, Memento, MVC)");
+            System.out.println("6. Launch Fullstack Web Server (http://localhost:8085)");
+            System.out.println("7. Exit");
 
             int choice = readInt("Enter choice: ");
 
@@ -38,11 +49,13 @@ public class Main {
                 case 2 -> studentLogin();
                 case 3 -> showEvents();
                 case 4 -> coordinatorPanel();
-                case 5 -> {
+                case 5 -> patternLabMenu();
+                case 6 -> launchWebServer();
+                case 7 -> {
                     System.out.println("\nThank you for using the College Event Management System.");
                     return;
                 }
-                default -> System.out.println("Invalid choice. Please select 1-5.");
+                default -> System.out.println("Invalid choice. Please select 1-7.");
             }
         }
     }
@@ -407,6 +420,258 @@ public class Main {
         System.out.println("Single instance active: " + (a == b));
         System.out.println("Instance A: " + System.identityHashCode(a));
         System.out.println("Instance B: " + System.identityHashCode(b));
+    }
+
+    private static void patternLabMenu() {
+        while (true) {
+            System.out.println("\n============= DESIGN PATTERN LAB =============");
+            System.out.println("1. Prototype       - Clone Event as a Separate Draft");
+            System.out.println("2. Mediator        - Coordinated Registration & Approval Workflow");
+            System.out.println("3. Template Method - Technical vs Cultural Workflow Pipelines");
+            System.out.println("4. Strategy        - Fee Calculation (FREE, STANDARD, EARLY_BIRD)");
+            System.out.println("5. Memento         - Event Version History & 1-Click Restore");
+            System.out.println("6. MVC             - Model-View-Controller Architecture Inspection");
+            System.out.println("7. Back to Main Menu");
+
+            int choice = readInt("Enter pattern selection: ");
+            switch (choice) {
+                case 1 -> prototypeDemo();
+                case 2 -> mediatorDemo();
+                case 3 -> templateMethodDemo();
+                case 4 -> strategyDemo();
+                case 5 -> mementoDemo();
+                case 6 -> mvcDemo();
+                case 7 -> { return; }
+                default -> System.out.println("Invalid selection. Please choose 1-7.");
+            }
+        }
+    }
+
+    private static void prototypeDemo() {
+        System.out.println("\n---------------- PROTOTYPE PATTERN ----------------");
+        System.out.println("Concept: Copies an existing object to create another.");
+        System.out.println("Usage  : Clone an event as a separate draft.");
+
+        List<Event> events = DB.getEvents();
+        if (events.isEmpty()) {
+            System.out.println("No events exist to clone.");
+            return;
+        }
+
+        showEvents();
+        int sel = readInt("\nSelect event number to clone as draft: ");
+        if (sel < 1 || sel > events.size()) {
+            System.out.println("Invalid selection.");
+            return;
+        }
+
+        Event source = events.get(sel - 1);
+        CollegeEventMediator mediator = new CollegeEventMediator(DB);
+        String customName = readNonEmpty("Enter draft title (or type 'default' to auto-prefix): ");
+        if ("default".equalsIgnoreCase(customName)) {
+            customName = null;
+        }
+
+        Event draft = mediator.mediateEventClone(source.getId(), customName);
+        System.out.println("\n✓ Cloned Prototype Created Successfully!");
+        System.out.println("Draft Event ID : #" + draft.getId());
+        System.out.println("Draft Name     : " + draft.getName());
+        System.out.println("Draft Status   : " + draft.getStatus());
+        System.out.println("Category       : " + draft.getCategory());
+        System.out.println("Capacity       : " + draft.getCapacity());
+        System.out.println("Venue          : " + draft.getVenue());
+    }
+
+    private static void mediatorDemo() {
+        System.out.println("\n----------------- MEDIATOR PATTERN -----------------");
+        System.out.println("Concept: Centralizes communication among collaborators.");
+        System.out.println("Usage  : Coordinates workflow interactions between Student,");
+        System.out.println("         Event, Fee Strategy, Approval Chain & Notifications.");
+
+        List<Event> events = DB.getEvents();
+        if (events.isEmpty()) {
+            System.out.println("No events available.");
+            return;
+        }
+
+        showEvents();
+        int sel = readInt("\nSelect event number: ");
+        if (sel < 1 || sel > events.size()) return;
+        Event event = events.get(sel - 1);
+
+        System.out.println("\nSelect Fee Tier (Strategy):");
+        System.out.println("1. FREE (College sponsored waiver)");
+        System.out.println("2. STANDARD (Regular delegate pass)");
+        System.out.println("3. EARLY_BIRD (30% discount)");
+        int tierChoice = readInt("Enter choice: ");
+        String tier = switch (tierChoice) {
+            case 1 -> "FREE";
+            case 3 -> "EARLY_BIRD";
+            default -> "STANDARD";
+        };
+
+        CollegeEventMediator mediator = new CollegeEventMediator(DB);
+        // Execute mediated flow using demo student (ID=1)
+        MediatedRegistrationResult result = mediator.mediateRegistration(1, event.getId(), tier, "EMAIL");
+
+        System.out.println("\nMediator Execution Timeline:");
+        for (String step : result.getCoordinationAuditLog()) {
+            System.out.println("  " + step);
+        }
+        System.out.println("\nFinal Outcome: " + result.getStatus() + " - " + result.getMessage());
+    }
+
+    private static void templateMethodDemo() {
+        System.out.println("\n------------- TEMPLATE METHOD PATTERN -------------");
+        System.out.println("Concept: Defines workflow skeleton with variable steps.");
+        System.out.println("Usage  : Technical/Cultural/Sports deployment pipelines.");
+
+        System.out.println("\nSelect Template to Execute:");
+        System.out.println("1. Technical Event Workflow (GitHub, Docker, 1Gbps LAN, CI/CD Rubric)");
+        System.out.println("2. Cultural Event Workflow  (AV Sound, Green Rooms, LED Stage, Jury QR)");
+        System.out.println("3. Sports Event Workflow    (Pitch Turf, Red Cross Paramedics, Bracket)");
+
+        int choice = readInt("Enter template choice: ");
+        EventWorkflowTemplate workflow = switch (choice) {
+            case 1 -> new TechnicalEventWorkflow();
+            case 2 -> new CulturalEventWorkflow();
+            case 3 -> new SportsEventWorkflow();
+            default -> null;
+        };
+
+        if (workflow == null) {
+            System.out.println("Invalid selection.");
+            return;
+        }
+
+        Event sampleEvent = new BaseEvent("Campus Spring Conclave 2026", workflow.getCategory(),
+                "Annual flagship symposium", "2026-11-15", "Auditorium & Labs", 250);
+
+        WorkflowExecutionReport report = workflow.executeWorkflow(sampleEvent);
+        System.out.println("\nTemplate Method Execution: " + report.getWorkflowName());
+        System.out.println("Target Event: " + report.getEventName());
+        System.out.println("==============================================================");
+        for (WorkflowStepLog step : report.getSteps()) {
+            System.out.println(step.toString());
+        }
+        System.out.println("==============================================================");
+        System.out.println("Result: " + report.getSummary());
+    }
+
+    private static void strategyDemo() {
+        System.out.println("\n---------------- STRATEGY PATTERN ----------------");
+        System.out.println("Concept: Interchangeable algorithms behind one interface.");
+        System.out.println("Usage  : Fee calculation: FREE, STANDARD, EARLY_BIRD.");
+
+        List<Event> events = DB.getEvents();
+        Event sample = events.isEmpty()
+                ? new BaseEvent("CodeQuest", "TECHNICAL", "Coding", "2026-10-10", "Lab", 100)
+                : events.get(0);
+
+        System.out.println("\nEvent Selected: " + sample.getName() + " [" + sample.getCategory() + "]");
+
+        FeeStrategyContext context = new FeeStrategyContext();
+
+        System.out.println("\n1. Applying [FREE] Strategy:");
+        context.setStrategy(new FreeFeeStrategy());
+        System.out.println("   " + context.executeStrategy(sample, null));
+
+        System.out.println("\n2. Applying [STANDARD] Strategy:");
+        context.setStrategy(new StandardFeeStrategy());
+        System.out.println("   " + context.executeStrategy(sample, null));
+
+        System.out.println("\n3. Applying [EARLY_BIRD] Strategy (30% Discount):");
+        context.setStrategy(new EarlyBirdFeeStrategy());
+        System.out.println("   " + context.executeStrategy(sample, null));
+    }
+
+    private static void mementoDemo() {
+        System.out.println("\n----------------- MEMENTO PATTERN -----------------");
+        System.out.println("Concept: Captures state for later restore.");
+        System.out.println("Usage  : Event version/history and restore flow.");
+
+        List<Event> events = DB.getEvents();
+        if (events.isEmpty()) {
+            System.out.println("No events found.");
+            return;
+        }
+
+        showEvents();
+        int sel = readInt("\nSelect event to inspect version checkpoints: ");
+        if (sel < 1 || sel > events.size()) return;
+        Event event = events.get(sel - 1);
+
+        EventController controller = new EventController(DB);
+        EventModel model = controller.loadEventModel(event.getId(), "STANDARD");
+
+        List<EventMemento> history = model.getVersionHistory();
+        System.out.println("\nCheckpoint Revision History for Event #" + event.getId() + ":");
+        if (history.isEmpty()) {
+            System.out.println("  No revisions recorded yet. Creating initial checkpoint...");
+            EventMemento v1 = EventCaretaker.getInstance().saveCheckpoint(event, "Initial Snapshot", "Coordinator");
+            history = List.of(v1);
+        }
+
+        for (EventMemento m : history) {
+            System.out.printf("  v%d [%s] - %s | Venue: %s | Cap: %d (%s)%n",
+                    m.getVersion(), m.getTimestamp(), m.getChangeSummary(),
+                    m.getVenue(), m.getCapacity(), m.getAuthor());
+        }
+
+        System.out.println("\nOptions:");
+        System.out.println("1. Create new checkpoint with modified venue & capacity");
+        System.out.println("2. Restore to earlier version");
+        System.out.println("3. Back");
+
+        int opt = readInt("Enter choice: ");
+        if (opt == 1) {
+            String newVenue = readNonEmpty("Enter new venue: ");
+            int newCap = readInt("Enter new capacity: ");
+            String note = readNonEmpty("Enter change reason: ");
+            EventModel updated = controller.updateEventWithCheckpoint(
+                    event.getId(), event.getName(), event.getCategory(),
+                    event.getDescription(), event.getDate(), newVenue, newCap,
+                    event.getStatus(), note, "Coordinator Admin");
+            System.out.println("\n✓ Checkpoint recorded! Updated venue: " + updated.getEvent().getVenue());
+        } else if (opt == 2) {
+            int ver = readInt("Enter version number to restore: ");
+            EventModel restored = controller.restoreFromVersion(event.getId(), ver);
+            if (restored != null) {
+                System.out.println("\n✓ State restored to v" + ver + "!");
+                System.out.println(controller.getView().renderConsoleCard(restored));
+            } else {
+                System.out.println("Version not found.");
+            }
+        }
+    }
+
+    private static void mvcDemo() {
+        System.out.println("\n------------------- MVC PATTERN -------------------");
+        System.out.println("Concept: Separates Model, View and Controller.");
+        System.out.println("Model     : EventModel encapsulates domain state & business rules.");
+        System.out.println("View      : EventView formats presentation without business logic.");
+        System.out.println("Controller: EventController handles user requests, updates Model & passes to View.");
+
+        List<Event> events = DB.getEvents();
+        if (events.isEmpty()) return;
+
+        EventController controller = new EventController(DB);
+        EventModel model = controller.loadEventModel(events.get(0).getId(), "EARLY_BIRD");
+
+        System.out.println("\n[Rendering presentation via EventView]:");
+        System.out.println(controller.getView().renderConsoleCard(model));
+    }
+
+    private static void launchWebServer() {
+        try {
+            WebServer server = new WebServer(8085);
+            server.start();
+            System.out.println("\n>>> Open your browser at: http://localhost:8085 <<<");
+            System.out.println("Press Enter to return to main menu (server continues running)...");
+            sc.nextLine();
+        } catch (Exception e) {
+            System.out.println("Web server started or already active on port 8085: " + e.getMessage());
+        }
     }
 
     private static int readInt(String prompt) {
