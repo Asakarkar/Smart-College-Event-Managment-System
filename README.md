@@ -171,3 +171,4 @@ Department: CSE
 ```
 
 The account is stored in SQLite and can immediately be used through **Student Login**.
+Will Try to change the Code Base Architecture 28/10/2026
